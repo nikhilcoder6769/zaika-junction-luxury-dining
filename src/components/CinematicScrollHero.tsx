@@ -212,18 +212,18 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     <div
       ref={containerRef}
       id="story"
-      className="relative w-full h-[450vh] bg-stone-950"
+      className="relative w-full max-w-full overflow-hidden h-[450vh] bg-stone-950"
     >
       {/* Sticky Fullscreen Canvas Viewport */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
+      <div className="sticky top-0 h-screen w-full max-w-full overflow-hidden flex flex-col justify-between">
         {/* Render Canvas */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover max-w-full pointer-events-none"
         />
 
         {/* Top Spacer for Header */}
-        <div className="relative z-10 pt-20 px-6 sm:px-12 flex justify-between items-center pointer-events-none">
+        <div className="relative z-10 pt-20 sm:pt-24 px-4 sm:px-12 flex justify-between items-center pointer-events-none">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-900/60 backdrop-blur-md border border-amber-500/30 text-amber-300 text-[11px] font-semibold tracking-widest uppercase">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Interactive 3D Journey</span>
@@ -301,7 +301,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
         </div>
 
         {/* Bottom Interactive Navigation & Progress Bar */}
-        <div className="relative z-10 pb-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between">
+        <div className="relative z-10 pb-20 md:pb-8 px-4 sm:px-12 max-w-7xl mx-auto w-full flex items-center justify-between">
           {/* Scene Jumping Pills */}
           <div className="flex items-center gap-2 bg-stone-950/70 backdrop-blur-lg px-3 py-2 rounded-full border border-stone-800/80 shadow-xl">
             {restaurantConfig.storyBeats.map((beat, idx) => (

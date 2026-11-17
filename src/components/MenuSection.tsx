@@ -120,7 +120,7 @@ export const MenuSection: React.FC = () => {
             </div>
 
             {/* Row 2: Category Filter Horizontal Scroll */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="w-full max-w-full flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 touch-pan-x overscroll-x-contain">
               {restaurantConfig.menuCategories.map((category) => (
                 <button
                   key={category}
