@@ -45,13 +45,16 @@ export const SpecialtiesSection: React.FC<SpecialtiesSectionProps> = ({ onOpenRe
 
         {/* 4 Specialty Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-          {restaurantConfig.specialties.map((item, index) => (
-            <ScrollReveal
-              key={item.id}
-              direction="up"
-              delay={index * 150}
-              className="h-full"
-            >
+          {restaurantConfig.specialties.map((item, index) => {
+            const dir = index % 2 === 0 ? 'left' : 'right';
+            return (
+              <ScrollReveal
+                key={item.id}
+                direction={dir}
+                delay={(index % 2) * 120}
+                duration={800}
+                className="h-full"
+              >
               <div className="h-full group rounded-3xl bg-stone-900/50 border border-stone-800/80 overflow-hidden hover:border-amber-500/50 transition-all duration-500 flex flex-col hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10">
                 {/* Image Frame */}
                 <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-stone-900">
@@ -122,7 +125,8 @@ export const SpecialtiesSection: React.FC<SpecialtiesSectionProps> = ({ onOpenRe
                 </div>
               </div>
             </ScrollReveal>
-          ))}
+          );
+        })}
         </div>
       </div>
     </section>

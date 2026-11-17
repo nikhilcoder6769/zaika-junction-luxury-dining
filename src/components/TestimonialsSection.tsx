@@ -23,13 +23,16 @@ export const TestimonialsSection: React.FC = () => {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {restaurantConfig.reviews.map((rev, index) => (
-            <ScrollReveal
-              key={rev.id}
-              direction="up"
-              delay={index * 140}
-              className="h-full"
-            >
+          {restaurantConfig.reviews.map((rev, index) => {
+            const dir = index === 0 ? 'left' : index === 2 ? 'right' : 'up';
+            return (
+              <ScrollReveal
+                key={rev.id}
+                direction={dir}
+                delay={index * 120}
+                duration={800}
+                className="h-full"
+              >
               <div className="h-full p-8 rounded-3xl bg-stone-900/60 border border-stone-800/80 hover:border-amber-500/40 transition-all duration-500 flex flex-col justify-between hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10">
                 <div>
                   <Quote className="w-8 h-8 text-amber-500/40 mb-4" />
@@ -57,7 +60,8 @@ export const TestimonialsSection: React.FC = () => {
                 </div>
               </div>
             </ScrollReveal>
-          ))}
+          );
+        })}
         </div>
       </div>
     </section>

@@ -57,11 +57,13 @@ export const HighlightsSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {highlights.map((item, index) => {
             const Icon = item.icon;
+            const dir = index < 2 ? 'left' : 'right';
             return (
               <ScrollReveal
                 key={index}
-                direction="up"
-                delay={index * 80}
+                direction={dir}
+                delay={(index % 2) * 120}
+                duration={800}
                 className="h-full"
               >
                 <div className="h-full group p-8 rounded-2xl bg-stone-950/70 border border-stone-800/80 hover:border-amber-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10">

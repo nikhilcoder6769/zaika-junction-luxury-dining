@@ -26,8 +26,8 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const winH = window.innerHeight || document.documentElement.clientHeight;
-      // Trigger when element top is within 115% of screen height (pre-reveal before entering viewport)
-      if (rect.top <= winH * 1.15 && rect.bottom >= -100) {
+      // Trigger when element top enters the viewport so user clearly sees the animation happen
+      if (rect.top <= winH * 0.92 && rect.bottom >= -100) {
         setIsVisible(true);
         if (triggerOnce) {
           window.removeEventListener('scroll', check);
@@ -45,7 +45,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check, { passive: true });
 
-    // IntersectionObserver with early margin as primary/secondary driver
+    // IntersectionObserver with viewport margin so animation triggers as element scrolls in
     let observer: IntersectionObserver | null = null;
     try {
       observer = new IntersectionObserver(
@@ -59,7 +59,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
             }
           }
         },
-        { rootMargin: '150px 0px 150px 0px', threshold: 0 }
+        { rootMargin: '0px 0px -40px 0px', threshold: options.threshold ?? 0.08 }
       );
       observer.observe(el);
     } catch {

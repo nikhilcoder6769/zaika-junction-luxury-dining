@@ -14,9 +14,9 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   children,
   direction = 'up',
   delay = 0,
-  duration = 500,
+  duration = 750,
   className = '',
-  threshold = 0.05,
+  threshold = 0.08,
 }) => {
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>({ threshold });
 
@@ -24,13 +24,13 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     if (isVisible) return 'none';
     switch (direction) {
       case 'up':
-        return 'translateY(20px)';
+        return 'translateY(40px)';
       case 'down':
-        return 'translateY(-20px)';
+        return 'translateY(-40px)';
       case 'left':
-        return 'translateX(20px)';
+        return 'translateX(-50px)';
       case 'right':
-        return 'translateX(-20px)';
+        return 'translateX(50px)';
       case 'none':
       default:
         return 'none';

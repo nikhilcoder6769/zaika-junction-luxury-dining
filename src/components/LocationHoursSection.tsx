@@ -13,7 +13,7 @@ export const LocationHoursSection: React.FC<LocationHoursSectionProps> = ({ onOp
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Info Side */}
-          <ScrollReveal direction="up" delay={0}>
+          <ScrollReveal direction="left" duration={800} delay={0}>
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold tracking-widest uppercase mb-3">
                 <MapPin className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export const LocationHoursSection: React.FC<LocationHoursSectionProps> = ({ onOp
           </ScrollReveal>
 
           {/* Visual Showcase Card */}
-          <ScrollReveal direction="up" delay={150}>
+          <ScrollReveal direction="right" duration={800} delay={150}>
             <div className="relative rounded-3xl bg-stone-950 border border-stone-800/80 p-8 shadow-2xl flex flex-col justify-between overflow-hidden group hover:border-amber-500/40 transition-all duration-500">
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-500/10 transition-colors duration-700" />
 

@@ -183,13 +183,16 @@ export const MenuSection: React.FC = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {visibleItems.map((item, index) => (
-                <ScrollReveal
-                  key={item.id}
-                  direction="up"
-                  delay={(index % 4) * 80}
-                  className="h-full"
-                >
+              {visibleItems.map((item, index) => {
+                const dir = index % 2 === 0 ? 'left' : 'right';
+                return (
+                  <ScrollReveal
+                    key={item.id}
+                    direction={dir}
+                    delay={(index % 2) * 100}
+                    duration={750}
+                    className="h-full"
+                  >
                   <div className="h-full group p-6 rounded-2xl bg-stone-950/70 border border-stone-800/70 hover:border-amber-500/40 transition-all duration-400 flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/5">
                     <div>
                       <div className="flex items-start justify-between gap-4 mb-2">
@@ -256,7 +259,8 @@ export const MenuSection: React.FC = () => {
                     </div>
                   </div>
                 </ScrollReveal>
-              ))}
+              );
+            })}
             </div>
 
             {/* Progressive Show More / Show Less CTA */}
