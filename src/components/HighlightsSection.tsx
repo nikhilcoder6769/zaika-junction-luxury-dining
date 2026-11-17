@@ -31,7 +31,9 @@ export const HighlightsSection: React.FC = () => {
   ];
 
   return (
-    <section id="experience" className="py-24 bg-stone-900/40 relative border-none">
+    <section id="experience" className="pt-16 pb-24 bg-stone-950 relative border-none">
+      {/* Visual Accent Divider */}
+      <div className="max-w-xs mx-auto h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent mb-12" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal direction="up" delay={0}>
           <div className="text-center max-w-2xl mx-auto mb-16">
