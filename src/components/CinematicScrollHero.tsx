@@ -72,14 +72,42 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     };
   }, [totalFrames]);
 
-  // Robust canvas drawing routine: NEVER turns black
-  const renderImageToCanvas = useCallback(
-    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, img: HTMLImageElement) => {
-      const { width: cWidth, height: cHeight } = canvas;
-      const iWidth = img.naturalWidth || 1280;
-      const iHeight = img.naturalHeight || 720;
+  // Robust canvas drawing routine: continuous sub-frame liquid blending
+  const drawFrameInterpolated = useCallback(
+    (exactFrame: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-      // Calculate "cover" scale and positioning
+      const clampedExact = Math.max(0, Math.min(exactFrame, totalFrames - 1));
+      const idxA = Math.floor(clampedExact);
+      const idxB = Math.min(idxA + 1, totalFrames - 1);
+      const blendFrac = clampedExact - idxA;
+
+      // Helper to find closest available loaded image
+      const getClosestLoaded = (targetIdx: number): HTMLImageElement | null => {
+        const candidate = imagesRef.current[targetIdx];
+        if (candidate?.complete && candidate.naturalWidth > 0) return candidate;
+        for (let offset = 1; offset < totalFrames; offset++) {
+          const prev = imagesRef.current[targetIdx - offset];
+          if (prev?.complete && prev.naturalWidth > 0) return prev;
+          const next = imagesRef.current[targetIdx + offset];
+          if (next?.complete && next.naturalWidth > 0) return next;
+        }
+        return lastDrawnImgRef.current || imagesRef.current[0] || null;
+      };
+
+      const imgA = getClosestLoaded(idxA);
+      const imgB = idxA === idxB ? null : getClosestLoaded(idxB);
+
+      if (!imgA) return;
+      lastDrawnImgRef.current = imgA;
+
+      const { width: cWidth, height: cHeight } = canvas;
+      const iWidth = imgA.naturalWidth || 1280;
+      const iHeight = imgA.naturalHeight || 720;
+
       const scale = Math.max(cWidth / iWidth, cHeight / iHeight);
       const drawWidth = iWidth * scale;
       const drawHeight = iHeight * scale;
@@ -87,9 +115,19 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       const offsetY = (cHeight - drawHeight) / 2;
 
       ctx.clearRect(0, 0, cWidth, cHeight);
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
-      // Elegant cinematic vignette gradient overlay for high contrast luxury typography while keeping visuals vibrant
+      // Base frame at full opacity
+      ctx.globalAlpha = 1.0;
+      ctx.drawImage(imgA, offsetX, offsetY, drawWidth, drawHeight);
+
+      // Sub-frame cross-fading: blends adjacent frames seamlessly like continuous 120fps video
+      if (imgB && imgB !== imgA && blendFrac > 0.005) {
+        ctx.globalAlpha = blendFrac;
+        ctx.drawImage(imgB, offsetX, offsetY, drawWidth, drawHeight);
+        ctx.globalAlpha = 1.0;
+      }
+
+      // Elegant cinematic vignette gradient overlay for high contrast luxury typography
       const gradient = ctx.createLinearGradient(0, 0, 0, cHeight);
       gradient.addColorStop(0, 'rgba(12, 10, 9, 0.50)');
       gradient.addColorStop(0.25, 'rgba(12, 10, 9, 0.20)');
@@ -100,52 +138,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, cWidth, cHeight);
     },
-    []
-  );
-
-  const drawFrame = useCallback(
-    (frameIndex: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Clamp frame index
-      const clampedIndex = Math.max(0, Math.min(frameIndex, totalFrames - 1));
-      let img: HTMLImageElement | null | undefined = imagesRef.current[clampedIndex];
-
-      // If requested frame is not yet fully loaded, find ANY closest loaded frame
-      if (!img || !img.complete || img.naturalWidth === 0) {
-        for (let offset = 1; offset < totalFrames; offset++) {
-          const prev = imagesRef.current[clampedIndex - offset];
-          if (prev?.complete && prev.naturalWidth > 0) {
-            img = prev;
-            break;
-          }
-          const next = imagesRef.current[clampedIndex + offset];
-          if (next?.complete && next.naturalWidth > 0) {
-            img = next;
-            break;
-          }
-        }
-      }
-
-      // If still not found, fallback to the last successfully rendered image
-      if (!img || !img.complete || img.naturalWidth === 0) {
-        img = lastDrawnImgRef.current;
-      }
-
-      // If still not found, fallback to the first frame
-      if (!img || !img.complete || img.naturalWidth === 0) {
-        img = imagesRef.current[0];
-      }
-
-      if (!img) return; // Only if not a single frame is loaded yet
-      lastDrawnImgRef.current = img;
-
-      renderImageToCanvas(ctx, canvas, img);
-    },
-    [totalFrames, renderImageToCanvas]
+    [totalFrames]
   );
 
   // Handle window resizing and retina pixel ratio
@@ -162,13 +155,13 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
       }
-      drawFrame(Math.floor(scrollProgress * (totalFrames - 1)));
+      drawFrameInterpolated(scrollProgress * (totalFrames - 1));
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [drawFrame, scrollProgress, totalFrames]);
+  }, [drawFrameInterpolated, scrollProgress, totalFrames]);
 
   // Smooth scroll listener with responsive progress interpolation
   useEffect(() => {
@@ -189,11 +182,14 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     };
 
     const updateFrame = () => {
-      // Lerp for smooth scroll inertia
-      currentProgress += (targetProgress - currentProgress) * 0.22;
+      // Luxury damped spring-like physics
+      const diff = targetProgress - currentProgress;
+      // Adaptive lerp factor: 0.075 for silky deceleration, slightly higher if delta is huge
+      const lerpFactor = Math.min(0.12, 0.075 + Math.abs(diff) * 0.08);
+      currentProgress += diff * lerpFactor;
 
-      const frameIdx = Math.floor(currentProgress * (totalFrames - 1));
-      drawFrame(frameIdx);
+      const exactFrame = currentProgress * (totalFrames - 1);
+      drawFrameInterpolated(exactFrame);
       setScrollProgress(currentProgress);
 
       // Determine active story scene beat continuously without dead zones
@@ -217,7 +213,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [drawFrame, totalFrames]);
+  }, [drawFrameInterpolated, totalFrames]);
 
   // Jump to specific scene when clicking scene pills
   const jumpToScene = (index: number) => {
@@ -228,9 +224,6 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     const targetScrollY = container.offsetTop + beat.startPct * totalScrollable + 10;
     window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
   };
-
-  const currentBeat =
-    restaurantConfig.storyBeats[currentSceneIdx] || restaurantConfig.storyBeats[0];
 
   return (
     <div
@@ -261,79 +254,114 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
           </div>
         </div>
 
-        {/* Center / Adaptive Story Beat Content Overlays */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 w-full my-auto pointer-events-none">
-          <div
-            className={`transition-all duration-500 transform ${
-              currentBeat.align === 'center'
-                ? 'max-w-2xl mx-auto text-center'
-                : currentBeat.align === 'right'
-                ? 'max-w-xl ml-auto text-right'
-                : 'max-w-xl mr-auto text-left'
-            }`}
-          >
-            {/* Story Badge */}
-            <div
-              className={`inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold tracking-[0.2em] uppercase mb-4 shadow-lg backdrop-blur-md ${
-                currentBeat.align === 'center'
-                  ? 'mx-auto'
-                  : currentBeat.align === 'right'
-                  ? 'ml-auto'
-                  : ''
-              }`}
-            >
-              <span>{currentBeat.badge}</span>
-            </div>
+        {/* Center / Adaptive Story Beat Content Overlays with Continuous Liquid Cross-Dissolve */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 w-full my-auto pointer-events-none h-72 sm:h-80 flex items-center justify-center">
+          {restaurantConfig.storyBeats.map((beat, idx) => {
+            // Compute smooth continuous bell curve for each beat
+            const mid = (beat.startPct + beat.endPct) / 2;
+            const half = (beat.endPct - beat.startPct) / 2;
+            const normDist = (scrollProgress - mid) / half; // -1 at start of beat, 0 at center, +1 at end
 
-            {/* Dynamic Title */}
-            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold text-stone-100 tracking-tight leading-[1.1] mb-4 drop-shadow-2xl">
-              {currentBeat.title}
-            </h1>
+            // If completely outside the visible transition window, don't render to keep 60/120fps GPU performance
+            if (Math.abs(normDist) > 1.25) return null;
 
-            {/* Description */}
-            <p className="text-base sm:text-lg text-stone-300 leading-relaxed font-sans drop-shadow-lg mb-8">
-              {currentBeat.description}
-            </p>
+            // Hermite bell curve: full opacity in the core of the beat, dissolves smoothly on edges
+            const rawWeight = Math.max(0, 1 - Math.pow(Math.abs(normDist), 2.2));
+            const opacity = Math.min(1, Math.max(0, rawWeight * 1.4));
+            // Subtle silky vertical drift: -18px when entering, 0px at center, +18px when exiting
+            const translateY = -normDist * 18;
 
-            {/* Final Scene Special Call-to-Actions (Active on Scene 6) */}
-            {currentSceneIdx === restaurantConfig.storyBeats.length - 1 && (
+            return (
               <div
-                className={`pointer-events-auto flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-300 ${
-                  currentBeat.align === 'center'
-                    ? 'items-center'
-                    : currentBeat.align === 'right'
-                    ? 'items-end'
-                    : 'items-start'
+                key={beat.id}
+                className={`absolute inset-0 flex flex-col justify-center pointer-events-none ${
+                  beat.align === 'center'
+                    ? 'items-center text-center'
+                    : beat.align === 'right'
+                    ? 'items-end text-right'
+                    : 'items-start text-left'
                 }`}
+                style={{
+                  opacity,
+                  transform: `translate3d(0, ${translateY.toFixed(1)}px, 0)`,
+                  willChange: 'opacity, transform',
+                }}
               >
-                <div className="flex flex-wrap items-center gap-4 justify-center">
-                  <button
-                    onClick={onOpenReservation}
-                    className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase text-stone-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>Book Your Experience</span>
-                    <ArrowRight className="w-4 h-4 text-stone-950" />
-                  </button>
-
-                  <a
-                    href="#menu"
-                    className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-stone-200 hover:text-white bg-stone-900/80 hover:bg-stone-800/90 border border-stone-700/80 backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <Utensils className="w-4 h-4 text-amber-400" />
-                    <span>Explore Menu</span>
-                  </a>
-                </div>
-
-                <a
-                  href="#experience"
-                  className="inline-flex items-center gap-1.5 text-[11px] text-amber-300/80 hover:text-amber-300 tracking-widest uppercase transition-colors pt-2"
+                <div
+                  className={`w-full ${
+                    beat.align === 'center'
+                      ? 'max-w-2xl mx-auto'
+                      : beat.align === 'right'
+                      ? 'max-w-xl ml-auto'
+                      : 'max-w-xl mr-auto'
+                  }`}
                 >
-                  <span>Explore Heritage & Craftsmanship</span>
-                  <ChevronDown className="w-3.5 h-3.5 animate-bounce text-amber-400" />
-                </a>
+                  {/* Story Badge */}
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold tracking-[0.2em] uppercase mb-4 shadow-lg backdrop-blur-md ${
+                      beat.align === 'center'
+                        ? 'mx-auto'
+                        : beat.align === 'right'
+                        ? 'ml-auto'
+                        : ''
+                    }`}
+                  >
+                    <span>{beat.badge}</span>
+                  </div>
+
+                  {/* Dynamic Title */}
+                  <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold text-stone-100 tracking-tight leading-[1.1] mb-4 drop-shadow-2xl">
+                    {beat.title}
+                  </h1>
+
+                  {/* Description */}
+                  <p className="text-base sm:text-lg text-stone-300 leading-relaxed font-sans drop-shadow-lg mb-6">
+                    {beat.description}
+                  </p>
+
+                  {/* Final Scene Special Call-to-Actions (Active on Scene 6) */}
+                  {idx === restaurantConfig.storyBeats.length - 1 && opacity > 0.35 && (
+                    <div
+                      className={`pointer-events-auto flex flex-col items-center gap-3 transition-opacity duration-300 ${
+                        beat.align === 'center'
+                          ? 'items-center'
+                          : beat.align === 'right'
+                          ? 'items-end'
+                          : 'items-start'
+                      }`}
+                      style={{ opacity: Math.min(1, (opacity - 0.35) / 0.65) }}
+                    >
+                      <div className="flex flex-wrap items-center gap-4 justify-center">
+                        <button
+                          onClick={onOpenReservation}
+                          className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase text-stone-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                        >
+                          <span>Book Your Experience</span>
+                          <ArrowRight className="w-4 h-4 text-stone-950" />
+                        </button>
+
+                        <a
+                          href="#menu"
+                          className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-stone-200 hover:text-white bg-stone-900/80 hover:bg-stone-800/90 border border-stone-700/80 backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer"
+                        >
+                          <Utensils className="w-4 h-4 text-amber-400" />
+                          <span>Explore Menu</span>
+                        </a>
+                      </div>
+
+                      <a
+                        href="#experience"
+                        className="inline-flex items-center gap-1.5 text-[11px] text-amber-300/80 hover:text-amber-300 tracking-widest uppercase transition-colors pt-2"
+                      >
+                        <span>Explore Heritage & Craftsmanship</span>
+                        <ChevronDown className="w-3.5 h-3.5 animate-bounce text-amber-400" />
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+            );
+          })}
         </div>
 
         {/* Bottom Interactive Navigation & Progress Bar */}

@@ -21,19 +21,19 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   const { ref, isVisible } = useScrollReveal<HTMLDivElement>({ threshold });
 
   const getTransformStyle = () => {
-    if (isVisible) return 'none';
+    if (isVisible) return 'translate3d(0, 0, 0)';
     switch (direction) {
       case 'up':
-        return 'translateY(40px)';
+        return 'translate3d(0, 36px, 0)';
       case 'down':
-        return 'translateY(-40px)';
+        return 'translate3d(0, -36px, 0)';
       case 'left':
-        return 'translateX(-50px)';
+        return 'translate3d(-45px, 0, 0)';
       case 'right':
-        return 'translateX(50px)';
+        return 'translate3d(45px, 0, 0)';
       case 'none':
       default:
-        return 'none';
+        return 'translate3d(0, 0, 0)';
     }
   };
 
@@ -49,6 +49,8 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
         transitionDelay: `${delay}ms`,
         willChange: 'opacity, transform',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
       }}
     >
       {children}

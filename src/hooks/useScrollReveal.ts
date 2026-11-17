@@ -22,6 +22,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
+    let ticking = false;
     const check = () => {
       if (!el) return;
       const rect = el.getBoundingClientRect();
@@ -30,20 +31,30 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       if (rect.top <= winH * 0.92 && rect.bottom >= -100) {
         setIsVisible(true);
         if (triggerOnce) {
-          window.removeEventListener('scroll', check);
-          window.removeEventListener('resize', check);
+          window.removeEventListener('scroll', handleScroll);
+          window.removeEventListener('resize', handleScroll);
         }
       } else if (!triggerOnce) {
         setIsVisible(false);
       }
     };
 
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          check();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
     // Check on mount
     check();
 
-    // Listen to scroll and resize
-    window.addEventListener('scroll', check, { passive: true });
-    window.addEventListener('resize', check, { passive: true });
+    // Listen to scroll and resize with passive RAF throttling
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
 
     // IntersectionObserver with viewport margin so animation triggers as element scrolls in
     let observer: IntersectionObserver | null = null;
