@@ -45,22 +45,22 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     };
 
     async function preloadAll() {
-      // 1. First priority batch: initial 10 frames for instant display
-      const initialPromises: Promise<void>[] = [];
-      for (let i = 0; i < Math.min(10, totalFrames); i++) {
-        initialPromises.push(loadFrame(i));
-      }
+      // 1. First priority batch: milestone frames for all 6 scenes + first 8 frames
+      const priorityIndices = [0, 1, 2, 3, 4, 5, 6, 7, 14, 27, 41, 54, 72];
+      const initialPromises = priorityIndices.map((idx) => loadFrame(idx));
       await Promise.all(initialPromises);
+      if (isMounted) setIsReady(true);
 
       // 2. Load all remaining frames concurrently in batches of 10
+      const remaining: number[] = [];
+      for (let i = 0; i < totalFrames; i++) {
+        if (!priorityIndices.includes(i)) remaining.push(i);
+      }
       const batchSize = 10;
-      for (let i = 10; i < totalFrames; i += batchSize) {
+      for (let i = 0; i < remaining.length; i += batchSize) {
         if (!isMounted) break;
-        const batchPromises: Promise<void>[] = [];
-        for (let j = i; j < Math.min(i + batchSize, totalFrames); j++) {
-          batchPromises.push(loadFrame(j));
-        }
-        await Promise.all(batchPromises);
+        const batch = remaining.slice(i, i + batchSize);
+        await Promise.all(batch.map((idx) => loadFrame(idx)));
       }
     }
 
@@ -89,12 +89,13 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       ctx.clearRect(0, 0, cWidth, cHeight);
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
-      // Subtle dark cinematic gradient overlay for high contrast luxury typography
+      // Elegant cinematic vignette gradient overlay for high contrast luxury typography while keeping visuals vibrant
       const gradient = ctx.createLinearGradient(0, 0, 0, cHeight);
-      gradient.addColorStop(0, 'rgba(12, 10, 9, 0.55)');
-      gradient.addColorStop(0.4, 'rgba(12, 10, 9, 0.25)');
-      gradient.addColorStop(0.85, 'rgba(12, 10, 9, 0.75)');
-      gradient.addColorStop(1, 'rgba(12, 10, 9, 0.98)');
+      gradient.addColorStop(0, 'rgba(12, 10, 9, 0.50)');
+      gradient.addColorStop(0.25, 'rgba(12, 10, 9, 0.20)');
+      gradient.addColorStop(0.55, 'rgba(12, 10, 9, 0.25)');
+      gradient.addColorStop(0.82, 'rgba(12, 10, 9, 0.45)');
+      gradient.addColorStop(1, 'rgba(12, 10, 9, 0.85)');
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, cWidth, cHeight);
@@ -132,6 +133,11 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       // If still not found, fallback to the last successfully rendered image
       if (!img || !img.complete || img.naturalWidth === 0) {
         img = lastDrawnImgRef.current;
+      }
+
+      // If still not found, fallback to the first frame
+      if (!img || !img.complete || img.naturalWidth === 0) {
+        img = imagesRef.current[0];
       }
 
       if (!img) return; // Only if not a single frame is loaded yet
@@ -196,7 +202,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
       );
       if (scene !== -1) {
         setCurrentSceneIdx(scene);
-      } else if (currentProgress >= 0.84) {
+      } else if (currentProgress >= 0.83) {
         setCurrentSceneIdx(restaurantConfig.storyBeats.length - 1);
       }
 
@@ -230,7 +236,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     <div
       ref={containerRef}
       id="story"
-      className="relative w-full max-w-full overflow-hidden h-[240vh] sm:h-[280vh] bg-stone-950"
+      className="relative w-full max-w-full overflow-hidden h-[360vh] sm:h-[420vh] bg-stone-950"
     >
       {/* Sticky Fullscreen Canvas Viewport */}
       <div className="sticky top-0 h-screen w-full max-w-full overflow-hidden flex flex-col justify-between">
@@ -292,28 +298,38 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
             {/* Final Scene Special Call-to-Actions (Active on Scene 6) */}
             {currentSceneIdx === restaurantConfig.storyBeats.length - 1 && (
               <div
-                className={`pointer-events-auto flex flex-wrap items-center gap-4 animate-in fade-in zoom-in-95 duration-300 ${
+                className={`pointer-events-auto flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-300 ${
                   currentBeat.align === 'center'
-                    ? 'justify-center'
+                    ? 'items-center'
                     : currentBeat.align === 'right'
-                    ? 'justify-end'
-                    : 'justify-start'
+                    ? 'items-end'
+                    : 'items-start'
                 }`}
               >
-                <button
-                  onClick={onOpenReservation}
-                  className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase text-stone-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <span>Book Your Experience</span>
-                  <ArrowRight className="w-4 h-4 text-stone-950" />
-                </button>
+                <div className="flex flex-wrap items-center gap-4 justify-center">
+                  <button
+                    onClick={onOpenReservation}
+                    className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-bold tracking-wider uppercase text-stone-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>Book Your Experience</span>
+                    <ArrowRight className="w-4 h-4 text-stone-950" />
+                  </button>
+
+                  <a
+                    href="#menu"
+                    className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-stone-200 hover:text-white bg-stone-900/80 hover:bg-stone-800/90 border border-stone-700/80 backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Utensils className="w-4 h-4 text-amber-400" />
+                    <span>Explore Menu</span>
+                  </a>
+                </div>
 
                 <a
-                  href="#menu"
-                  className="px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-stone-200 hover:text-white bg-stone-900/80 hover:bg-stone-800/90 border border-stone-700/80 backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer"
+                  href="#experience"
+                  className="inline-flex items-center gap-1.5 text-[11px] text-amber-300/80 hover:text-amber-300 tracking-widest uppercase transition-colors pt-2"
                 >
-                  <Utensils className="w-4 h-4 text-amber-400" />
-                  <span>Explore Menu</span>
+                  <span>Explore Heritage & Craftsmanship</span>
+                  <ChevronDown className="w-3.5 h-3.5 animate-bounce text-amber-400" />
                 </a>
               </div>
             )}

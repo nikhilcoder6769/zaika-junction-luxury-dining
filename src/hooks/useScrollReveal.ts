@@ -26,8 +26,8 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const winH = window.innerHeight || document.documentElement.clientHeight;
-      // Trigger when element top is within 90% of screen height
-      if (rect.top <= winH * 0.90 && rect.bottom >= 0) {
+      // Trigger when element top is within 115% of screen height (pre-reveal before entering viewport)
+      if (rect.top <= winH * 1.15 && rect.bottom >= -100) {
         setIsVisible(true);
         if (triggerOnce) {
           window.removeEventListener('scroll', check);
@@ -45,7 +45,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check, { passive: true });
 
-    // IntersectionObserver as secondary driver
+    // IntersectionObserver with early margin as primary/secondary driver
     let observer: IntersectionObserver | null = null;
     try {
       observer = new IntersectionObserver(
@@ -59,7 +59,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
             }
           }
         },
-        { threshold: 0.05 }
+        { rootMargin: '150px 0px 150px 0px', threshold: 0 }
       );
       observer.observe(el);
     } catch {

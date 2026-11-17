@@ -25,7 +25,7 @@ export const restaurantConfig: RestaurantConfig = {
     {
       id: "entrance",
       startPct: 0.0,
-      endPct: 0.18,
+      endPct: 0.16,
       badge: "ROYAL SANCTUARY",
       title: "Step Into Timeless Elegance",
       description: "Intricately carved jaali arches bathed in warm sunbeams welcome you to an unforgettable architectural and culinary dining experience.",
@@ -33,8 +33,8 @@ export const restaurantConfig: RestaurantConfig = {
     },
     {
       id: "food-journey",
-      startPct: 0.18,
-      endPct: 0.35,
+      startPct: 0.16,
+      endPct: 0.33,
       badge: "THE GRAND FEAST",
       title: "A Symphony of Flavors",
       description: "From slow-steamed fragrant Handi Dum Biryani to sizzling crispy starters and wok-tossed Asian noodles, every plate is art.",
@@ -42,8 +42,8 @@ export const restaurantConfig: RestaurantConfig = {
     },
     {
       id: "spices",
-      startPct: 0.35,
-      endPct: 0.52,
+      startPct: 0.33,
+      endPct: 0.50,
       badge: "THE ALCHEMY OF SPICES",
       title: "Suspended in Perfection",
       description: "Whole cinnamon quills, star anise, fragrant green cardamom, ripe tomatoes, and garden-fresh herbs—the soul of authentic Indian heritage.",
@@ -51,8 +51,8 @@ export const restaurantConfig: RestaurantConfig = {
     },
     {
       id: "signature",
-      startPct: 0.52,
-      endPct: 0.68,
+      startPct: 0.50,
+      endPct: 0.67,
       badge: "SIGNATURE MASTERPIECE",
       title: "Crafted by Master Ustads",
       description: "Velvety hand-churned paneer curries, slow-cooked gravies simmered over charcoal, and delicate desserts crowned with real silver vark.",
@@ -60,8 +60,8 @@ export const restaurantConfig: RestaurantConfig = {
     },
     {
       id: "ambience",
-      startPct: 0.68,
-      endPct: 0.84,
+      startPct: 0.67,
+      endPct: 0.83,
       badge: "MEMORABLE GATHERINGS",
       title: "Warm Ambiance & Hospitality",
       description: "Lush botanical textures, glowing chandeliers, and intimate dining spaces designed for cherished conversations and family celebrations.",
@@ -69,7 +69,7 @@ export const restaurantConfig: RestaurantConfig = {
     },
     {
       id: "grand-finale",
-      startPct: 0.84,
+      startPct: 0.83,
       endPct: 1.0,
       badge: "ZAIKA JUNCTION",
       title: "Good Food. Great Moments.",
