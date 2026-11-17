@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Flame, Sparkles, MessageCircle, UtensilsCrossed, X } from 'lucide-react';
+import { Search, Flame, Sparkles, MessageCircle, UtensilsCrossed, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { restaurantConfig } from '../config/restaurant.config';
 import { MenuItem, DietaryType } from '../types';
 import { ScrollReveal } from './ScrollReveal';
+
+const INITIAL_VISIBLE_COUNT = 6;
 
 export const MenuSection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedDietary, setSelectedDietary] = useState<DietaryType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE_COUNT);
 
   const filteredItems = useMemo(() => {
     return restaurantConfig.menuItems.filter((item: MenuItem) => {
@@ -30,6 +33,25 @@ export const MenuSection: React.FC = () => {
       return categoryMatch && dietaryMatch && searchMatch;
     });
   }, [selectedCategory, selectedDietary, searchQuery]);
+
+  const visibleItems = useMemo(() => {
+    return filteredItems.slice(0, visibleCount);
+  }, [filteredItems, visibleCount]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  };
+
+  const handleDietaryChange = (dietary: DietaryType | 'all') => {
+    setSelectedDietary(dietary);
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  };
 
   const handleOrderWhatsApp = (item: MenuItem) => {
     const text = encodeURIComponent(
@@ -69,13 +91,16 @@ export const MenuSection: React.FC = () => {
                   type="text"
                   placeholder="Search biryani, kebabs, noodles..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 pr-9 py-2.5 rounded-full bg-stone-900 border border-stone-700/80 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-400 transition-colors"
                 />
                 {searchQuery && (
                   <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setVisibleCount(INITIAL_VISIBLE_COUNT);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -85,7 +110,7 @@ export const MenuSection: React.FC = () => {
               {/* Dietary Toggle Buttons */}
               <div className="flex items-center gap-2 self-start sm:self-auto bg-stone-900/90 p-1 rounded-full border border-stone-800">
                 <button
-                  onClick={() => setSelectedDietary('all')}
+                  onClick={() => handleDietaryChange('all')}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     selectedDietary === 'all'
                       ? 'bg-amber-400 text-stone-950 shadow-md'
@@ -95,7 +120,7 @@ export const MenuSection: React.FC = () => {
                   All
                 </button>
                 <button
-                  onClick={() => setSelectedDietary('veg')}
+                  onClick={() => handleDietaryChange('veg')}
                   className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     selectedDietary === 'veg'
                       ? 'bg-emerald-600 text-white shadow-md'
@@ -106,7 +131,7 @@ export const MenuSection: React.FC = () => {
                   <span>Pure Veg</span>
                 </button>
                 <button
-                  onClick={() => setSelectedDietary('non-veg')}
+                  onClick={() => handleDietaryChange('non-veg')}
                   className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     selectedDietary === 'non-veg'
                       ? 'bg-red-700 text-white shadow-md'
@@ -124,7 +149,7 @@ export const MenuSection: React.FC = () => {
               {restaurantConfig.menuCategories.map((category) => (
                 <button
                   key={category}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategoryChange(category)}
                   className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     selectedCategory === category
                       ? 'bg-amber-400/20 text-amber-300 border border-amber-400/50 shadow-inner'
@@ -148,89 +173,123 @@ export const MenuSection: React.FC = () => {
                 setSelectedCategory('All');
                 setSelectedDietary('all');
                 setSearchQuery('');
+                setVisibleCount(INITIAL_VISIBLE_COUNT);
               }}
-              className="mt-4 px-5 py-2 rounded-full text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20"
+              className="mt-4 px-5 py-2 rounded-full text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer"
             >
               Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredItems.map((item, index) => (
-              <ScrollReveal
-                key={item.id}
-                direction="up"
-                delay={(index % 4) * 80}
-                className="h-full"
-              >
-                <div className="h-full group p-6 rounded-2xl bg-stone-950/70 border border-stone-800/70 hover:border-amber-500/40 transition-all duration-400 flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/5">
-                  <div>
-                    <div className="flex items-start justify-between gap-4 mb-2">
-                      <div className="flex items-center gap-2.5">
-                        {/* Dietary Indian Badge Indicator */}
-                        <span
-                          className={`w-4 h-4 rounded-sm border flex items-center justify-center p-0.5 ${
-                            item.dietary === 'veg'
-                              ? 'border-emerald-500'
-                              : 'border-red-600'
-                          }`}
-                          title={item.dietary === 'veg' ? 'Pure Vegetarian' : 'Non-Vegetarian'}
-                        >
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {visibleItems.map((item, index) => (
+                <ScrollReveal
+                  key={item.id}
+                  direction="up"
+                  delay={(index % 4) * 80}
+                  className="h-full"
+                >
+                  <div className="h-full group p-6 rounded-2xl bg-stone-950/70 border border-stone-800/70 hover:border-amber-500/40 transition-all duration-400 flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/5">
+                    <div>
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex items-center gap-2.5">
+                          {/* Dietary Indian Badge Indicator */}
                           <span
-                            className={`w-2 h-2 rounded-full ${
-                              item.dietary === 'veg' ? 'bg-emerald-500' : 'bg-red-600'
+                            className={`w-4 h-4 rounded-sm border flex items-center justify-center p-0.5 ${
+                              item.dietary === 'veg'
+                                ? 'border-emerald-500'
+                                : 'border-red-600'
                             }`}
-                          />
-                        </span>
+                            title={item.dietary === 'veg' ? 'Pure Vegetarian' : 'Non-Vegetarian'}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                item.dietary === 'veg' ? 'bg-emerald-500' : 'bg-red-600'
+                              }`}
+                            />
+                          </span>
 
-                        <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-100 group-hover:text-amber-300 transition-colors">
-                          {item.name}
-                        </h3>
+                          <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-100 group-hover:text-amber-300 transition-colors">
+                            {item.name}
+                          </h3>
+                        </div>
+
+                        {/* Price in INR */}
+                        <div className="text-right">
+                          <span className="font-mono text-base font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
+                            ₹{item.price}
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Price in INR */}
-                      <div className="text-right">
-                        <span className="font-mono text-base font-bold text-amber-400 group-hover:text-amber-300 transition-colors">
-                          ₹{item.price}
-                        </span>
+                      {/* Description */}
+                      <p className="text-xs sm:text-sm text-stone-400 leading-relaxed font-sans mb-4">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Footer with badges and WhatsApp CTA */}
+                    <div className="pt-3 border-t border-stone-800/60 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {item.isChefSpecial && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Chef's Choice</span>
+                          </span>
+                        )}
+                        {item.spiceLevel && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-stone-400 px-2 py-0.5 rounded bg-stone-900 border border-stone-800">
+                            <Flame className="w-3 h-3 text-red-400" />
+                            <span>Spice {item.spiceLevel}/3</span>
+                          </span>
+                        )}
                       </div>
+
+                      <button
+                        onClick={() => handleOrderWhatsApp(item)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 transition-all active:scale-95 cursor-pointer"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>Order</span>
+                      </button>
                     </div>
-
-                    {/* Description */}
-                    <p className="text-xs sm:text-sm text-stone-400 leading-relaxed font-sans mb-4">
-                      {item.description}
-                    </p>
                   </div>
+                </ScrollReveal>
+              ))}
+            </div>
 
-                  {/* Footer with badges and WhatsApp CTA */}
-                  <div className="pt-3 border-t border-stone-800/60 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {item.isChefSpecial && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          <Sparkles className="w-3 h-3" />
-                          <span>Chef's Choice</span>
-                        </span>
-                      )}
-                      {item.spiceLevel && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-stone-400 px-2 py-0.5 rounded bg-stone-900 border border-stone-800">
-                          <Flame className="w-3 h-3 text-red-400" />
-                          <span>Spice {item.spiceLevel}/3</span>
-                        </span>
-                      )}
-                    </div>
+            {/* Progressive Show More / Show Less CTA */}
+            {filteredItems.length > INITIAL_VISIBLE_COUNT && (
+              <div className="mt-12 flex flex-col items-center justify-center gap-3">
+                {visibleCount < filteredItems.length ? (
+                  <button
+                    onClick={() => setVisibleCount((prev) => Math.min(prev + 6, filteredItems.length))}
+                    className="group inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider text-stone-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-xl shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <span>Show More Dishes ({filteredItems.length - visibleCount} More)</span>
+                    <ChevronDown className="w-4 h-4 text-stone-950 group-hover:translate-y-0.5 transition-transform" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setVisibleCount(INITIAL_VISIBLE_COUNT);
+                      const el = document.getElementById('menu');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider text-stone-300 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-800 hover:border-stone-700 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <span>Show Less</span>
+                    <ChevronUp className="w-4 h-4 text-amber-400 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                )}
 
-                    <button
-                      onClick={() => handleOrderWhatsApp(item)}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 transition-all active:scale-95 cursor-pointer"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>Order</span>
-                    </button>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                <p className="text-xs text-stone-500 font-sans">
+                  Showing {visibleItems.length} of {filteredItems.length} delicacies
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
