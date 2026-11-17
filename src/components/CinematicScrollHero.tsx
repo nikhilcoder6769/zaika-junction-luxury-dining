@@ -236,7 +236,7 @@ export const CinematicScrollHero: React.FC<CinematicScrollHeroProps> = ({ onOpen
     <div
       ref={containerRef}
       id="story"
-      className="relative w-full max-w-full overflow-hidden h-[360vh] sm:h-[420vh] bg-stone-950"
+      className="relative w-full max-w-full h-[360vh] sm:h-[420vh] bg-stone-950"
     >
       {/* Sticky Fullscreen Canvas Viewport */}
       <div className="sticky top-0 h-screen w-full max-w-full overflow-hidden flex flex-col justify-between">

@@ -15,7 +15,7 @@ export const App: React.FC = () => {
   const [reservationOpen, setReservationOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-stone-950 text-stone-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen w-full max-w-full bg-stone-950 text-stone-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Gold Scroll Progress Bar */}
       <ScrollProgressBar />
 
@@ -23,7 +23,7 @@ export const App: React.FC = () => {
       <Header onOpenReservation={() => setReservationOpen(true)} />
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-full overflow-x-hidden">
+      <main className="flex-1 w-full max-w-full">
         {/* Crown Jewel: 3D Scroll Cinematic Animation Hero */}
         <CinematicScrollHero onOpenReservation={() => setReservationOpen(true)} />
 
